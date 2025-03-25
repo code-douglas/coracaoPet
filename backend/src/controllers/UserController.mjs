@@ -62,7 +62,6 @@ class UserController {
     await createUserToken(req, res, user);
 
   }
-
   static async checkUserByToken(req, res) {
     let currentUser;
 
