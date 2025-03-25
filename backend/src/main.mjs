@@ -16,5 +16,4 @@ app.use(express.static('public'));
 // Routes
 app.use('/users', UserRoutes);
 
-
 app.listen(5000);
