@@ -44,6 +44,22 @@ class UserController {
       });
     }
   }
+  static async login(req, res) {
+    const { email, password } = req.body;
+    let contract = new ValidationContract();
+
+    contract.isRequired(email, 'O campo email é obrigatório.');
+    contract.isRequired(password, 'O campo senha é obrigatória.');
+
+    const user = await User.findOne({ email: email });
+    if (!user) return res.status(422).json({ message: 'Usuário não cadastrado.' });
+
+    const checkPassword = await bcrypt.compare(password, user.password);
+    if (!checkPassword) return res.status(422).json({ message: 'Verifique suas informações e tente novamente.' });
+
+    await createUserToken(req, res, user);
+
+  }
 }
 
 export default UserController;
