@@ -1,13 +1,19 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
-async function main () {
+async function connection () {
   try {
-    mongoose.connection(process.env.MONGO_DB_URL);
+    await mongoose.connect(process.env.MONGO_DB_URL);
     console.log('Connect database..');
   } catch (error) {
     console.log(error);
   }
 }
 
-export default main;
+try {
+  connection();
+} catch (error) {
+  console.log(error);
+}
+
+export default mongoose;
