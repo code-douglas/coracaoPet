@@ -60,6 +60,18 @@ class UserController {
     await createUserToken(req, res, user);
 
   }
+
+  static async checkUserByToken(req, res) {
+    let currentUserToken;
+
+    console.log(req.headers.authorization);
+
+    if(req.headers.authorization) {}
+
+    currentUserToken = null;
+
+    res.status(200).send(currentUserToken);
+  }
 }
 
 export default UserController;
