@@ -1,30 +1,36 @@
 import bcrypt from 'bcrypt';
 import User from '../models/User.mjs';
 import createUserToken from '../helpers/createUserToken.mjs';
+import ValidationContract from '../helpers/validateUser.mjs';
 
 class UserController {
   static async register(req, res) {
     const { name, email, phone, password, confirmPassword } = req.body;
+    let contract = new ValidationContract();
 
-    // Validations
-    if(!name) return res.status(422).json({ message: 'O campo nome é obrigatório.' });
-    if(!email) return res.status(422).json({ message: 'O campo email é obrigatório.' });
-    if(!phone) return res.status(422).json({ message: 'O campo telefone é obrigatório.' });
-    if(!password) return res.status(422).json({ message: 'O campo senha é obrigatório.' });
-    if(!confirmPassword) return res.status(422).json({ message: 'A confirmação de senha é obrigatória.' });
-    if(password !== confirmPassword) return res.status(422).json({ message: 'As senhas precisam ser iguais.' });
+    contract.isRequired(name, 'O campo nome é obrigatório.');
+    contract.isRequired(email, 'O campo email é obrigatório.');
+    contract.isEmail(email, 'O email informado é inválido.');
+    contract.isRequired(phone, 'O campo telefone é obrigatório.');
+    contract.isRequired(password, 'O campo senha é obrigatória.');
+    contract.hasMinLen(password, 6, 'A senha deve ter no mínimo 6 caracteres.');
+    contract.isRequired(confirmPassword, 'A confirmação de senha é obrigatória.');
+    if (password !== confirmPassword) contract.errors.push({ message: 'As senhas precisam ser iguais.' });
+
+    if (!contract.isValid()) {
+      return res.status(422).json({ errors: contract.errors });
+    }
 
     const checkUserExist = await User.findOne({ email: email });
-
-    if(checkUserExist) return res.status(422).json({ message: 'Usuário já cadastrado.' });
+    if (checkUserExist) return res.status(422).json({ message: 'Usuário já cadastrado.' });
 
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
     const user = new User({
-      name: name,
-      email: email,
-      phone: phone,
+      name,
+      email,
+      phone,
       password: passwordHash
     });
 
