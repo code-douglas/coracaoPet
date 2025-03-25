@@ -1,0 +1,4 @@
+backend/node_modules/
+backend/.env
+backend/public/images/pets/
+backend/public/images/users/
