@@ -1,7 +1,9 @@
 import bcrypt from 'bcrypt';
 import User from '../models/User.mjs';
+import jwt from 'jsonwebtoken';
 import createUserToken from '../helpers/createUserToken.mjs';
 import ValidationContract from '../helpers/validateUser.mjs';
+import getTokenByRequest from '../helpers/getTokenByRequest.mjs';
 
 class UserController {
   static async register(req, res) {
@@ -62,15 +64,24 @@ class UserController {
   }
 
   static async checkUserByToken(req, res) {
-    let currentUserToken;
+    let currentUser;
 
-    console.log(req.headers.authorization);
+    if(req.headers.authorization) {
+      try {
+        const token = getTokenByRequest(req);
+        const decodedToken = jwt.verify(token, 'oursecret');
 
-    if(req.headers.authorization) {}
+        currentUser  = await User.findById(decodedToken.id);
+        currentUser.password = undefined;
+      } catch (error) {
+        console.log('Token inválido ou erro ao verificar usuário:', error);
+        return res.status(401).send({ message: 'Token inválido ou erro ao verificar usuário.' });
+      }
+    }
 
-    currentUserToken = null;
+    console.log('Sem retorno.');
+    return res.status(200).json(currentUser);
 
-    res.status(200).send(currentUserToken);
   }
 }
 
