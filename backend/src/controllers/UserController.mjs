@@ -82,6 +82,19 @@ class UserController {
     return res.status(200).json(currentUser);
 
   }
+  static async getUserById(req, res) {
+    const { id } = req.params;
+
+    const user = await User.findById(id).select('-password');
+
+    console.log(user);
+
+    if(!user) return res.status(404).json({ message: 'Usuário não encontrado' });
+
+    res.status(200).json({ user });
+  }
+
+  static async updateUser(req, res) {}
 }
 
 export default UserController;
