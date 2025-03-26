@@ -94,7 +94,13 @@ class UserController {
     res.status(200).json({ user });
   }
 
-  static async updateUser(req, res) {}
+  static async editUser(req, res) {
+    res.status(200).json({
+      message: 'Usuário atualizado com sucesso.'
+    });
+
+    return;
+  }
 }
 
 export default UserController;
