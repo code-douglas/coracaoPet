@@ -1,7 +1,5 @@
 # User Authentication API
 
-This is a simple user authentication API built with **Express** and **MongoDB**. The API provides endpoints for user registration, login, and profile management. The server is configured to handle CORS requests and serve static files (such as user images) from a `public` folder.
-
 ## Features
 
 - User Registration
