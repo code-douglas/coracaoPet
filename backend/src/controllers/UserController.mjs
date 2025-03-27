@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import createUserToken from '../helpers/createUserToken.mjs';
 import ValidationContract from '../helpers/validateUser.mjs';
 import getTokenByRequest from '../helpers/getTokenByRequest.mjs';
-import getUserByJwtToken from '../helpers/getUserByJwtToken.mjs';
+// import getUserByJwtToken from '../helpers/getUserByJwtToken.mjs';
 
 class UserController {
   static async register(req, res) {
@@ -125,44 +125,51 @@ class UserController {
   }
 
   static async editUser(req, res) {
+    const user = req.user;
+    const { id } = req.params;
 
-    const token = getTokenByRequest(req);
-    const user = await getUserByJwtToken(token);
+    if (user.id !== id) {
+      return res.status(403).json({ message: 'Você não tem permissão para editar este usuário.' });
+    }
 
     const { name, email, phone, password, confirmPassword } = req.body;
-
     let contract = new ValidationContract();
-
-    if(!user) return res.status(404).json({ message: 'Usuário não encontrado.' });
 
     contract.isRequired(name, 'O campo nome é obrigatório.');
     contract.isRequired(email, 'O campo email é obrigatório.');
-
-    user.name = name;
-
-    const userExist = await User.findOne({ email: email });
-    if(user.email !== email && userExist) return res.status(404).json({ message: 'E-mail já cadastrado.' });
     contract.isEmail(email, 'O email informado é inválido.');
-    user.email = email;
 
-    contract.isRequired(phone, 'O campo telefone é obrigatório.');
+    const userToUpdate = await User.findById(id);
+    if (!userToUpdate) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
 
-    user.phone = phone;
+    userToUpdate.name = name;
+    userToUpdate.email = email;
+    userToUpdate.phone = phone;
 
-    contract.isRequired(password, 'O campo senha é obrigatória.');
-    contract.hasMinLen(password, 6, 'A senha deve ter no mínimo 6 caracteres.');
-    contract.isRequired(confirmPassword, 'A confirmação de senha é obrigatória.');
-
-    if (password !== confirmPassword) {
-      contract.errors.push({ message: 'As senhas precisam ser iguais.' });
+    if (password) {
+      contract.hasMinLen(password, 6, 'A senha deve ter no mínimo 6 caracteres.');
+      contract.isRequired(confirmPassword, 'A confirmação de senha é obrigatória.');
+      if (password !== confirmPassword) {
+        contract.errors.push({ message: 'As senhas precisam ser iguais.' });
+      }
+      const salt = await bcrypt.genSalt(12);
+      userToUpdate.password = await bcrypt.hash(password, salt);
     }
 
     if (!contract.isValid()) {
       return res.status(422).json({ errors: contract.errors });
     }
-    res.status(200).json({ message: 'Usuário atualizado com sucesso.' });
-    return;
+
+    try {
+      await userToUpdate.save();
+      res.status(200).json({ message: 'Usuário atualizado com sucesso.' });
+    } catch (error) {
+      res.status(500).json({ message: 'Erro ao atualizar usuário, tente novamente.', error });
+    }
   }
+
 }
 
 export default UserController;
