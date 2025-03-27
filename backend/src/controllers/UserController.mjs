@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import createUserToken from '../helpers/createUserToken.mjs';
 import ValidationContract from '../helpers/validateUser.mjs';
 import getTokenByRequest from '../helpers/getTokenByRequest.mjs';
+import getUserByJwtToken from '../helpers/getUserByJwtToken.mjs';
 
 class UserController {
   static async register(req, res) {
@@ -124,15 +125,30 @@ class UserController {
   }
 
   static async editUser(req, res) {
-    const id = req.params.id;
-    let contract = new ValidationContract();
+
+    const token = getTokenByRequest(req);
+    const user = await getUserByJwtToken(token);
+
     const { name, email, phone, password, confirmPassword } = req.body;
-    // let image = '';
+
+    let contract = new ValidationContract();
+
+    if(!user) return res.status(404).json({ message: 'Usuário não encontrado.' });
 
     contract.isRequired(name, 'O campo nome é obrigatório.');
     contract.isRequired(email, 'O campo email é obrigatório.');
+
+    user.name = name;
+
+    const userExist = await User.findOne({ email: email });
+    if(user.email !== email && userExist) return res.status(404).json({ message: 'E-mail já cadastrado.' });
     contract.isEmail(email, 'O email informado é inválido.');
+    user.email = email;
+
     contract.isRequired(phone, 'O campo telefone é obrigatório.');
+
+    user.phone = phone;
+
     contract.isRequired(password, 'O campo senha é obrigatória.');
     contract.hasMinLen(password, 6, 'A senha deve ter no mínimo 6 caracteres.');
     contract.isRequired(confirmPassword, 'A confirmação de senha é obrigatória.');
@@ -144,14 +160,6 @@ class UserController {
     if (!contract.isValid()) {
       return res.status(422).json({ errors: contract.errors });
     }
-
-    const user = await User.findById(id);
-    if(!user) return res.status(404).json({ message: 'Usuário não encontrado.' });
-
-    const userExist = await User.findOne({ email: email });
-    if(user.email !== email && userExist) return res.status(404).json({ message: 'E-mail já cadastrado.' });
-
-    user.email = email;
     res.status(200).json({ message: 'Usuário atualizado com sucesso.' });
     return;
   }
