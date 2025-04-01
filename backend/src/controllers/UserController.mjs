@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import createUserToken from '../helpers/createUserToken.mjs';
 import ValidationContract from '../helpers/validateUser.mjs';
 import getTokenByRequest from '../helpers/getTokenByRequest.mjs';
-// import getUserByJwtToken from '../helpers/getUserByJwtToken.mjs';
 
 class UserController {
   static async register(req, res) {
@@ -133,16 +132,20 @@ class UserController {
     }
 
     const { name, email, phone, password, confirmPassword } = req.body;
-    let contract = new ValidationContract();
-
-    contract.isRequired(name, 'O campo nome é obrigatório.');
-    contract.isRequired(email, 'O campo email é obrigatório.');
-    contract.isEmail(email, 'O email informado é inválido.');
 
     const userToUpdate = await User.findById(id);
     if (!userToUpdate) {
       return res.status(404).json({ message: 'Usuário não encontrado.' });
     }
+
+    if (req.file) {
+      userToUpdate.image = req.file.filename;
+    }
+
+    let contract = new ValidationContract();
+    contract.isRequired(name, 'O campo nome é obrigatório.');
+    contract.isRequired(email, 'O campo email é obrigatório.');
+    contract.isEmail(email, 'O email informado é inválido.');
 
     userToUpdate.name = name;
     userToUpdate.email = email;
