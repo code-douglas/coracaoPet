@@ -1,6 +1,7 @@
+import 'dotenv/config';
 import bcrypt from 'bcrypt';
-import User from '../models/User.mjs';
 import jwt from 'jsonwebtoken';
+import User from '../models/User.mjs';
 import createUserToken from '../helpers/createUserToken.mjs';
 import ValidationContract from '../helpers/validateUser.mjs';
 import getTokenByRequest from '../helpers/getTokenByRequest.mjs';
@@ -26,7 +27,7 @@ class UserController {
       return res.status(422).json({ errors: contract.errors });
     }
 
-    const checkUserExist = await User.findOne({ email: email });
+    const checkUserExist = await User.findOne({ email });
     if (checkUserExist) {
       return res.status(422).json({ message: 'Usuário já cadastrado.' });
     }
@@ -34,21 +35,13 @@ class UserController {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const user = new User({
-      name,
-      email,
-      phone,
-      password: passwordHash
-    });
+    const user = new User({ name, email, phone, password: passwordHash });
 
     try {
       const newUser = await user.save();
       await createUserToken(req, res, newUser);
     } catch (error) {
-      res.status(500).json({
-        message: 'Erro ao criar usuário, tente novamente.',
-        error
-      });
+      res.status(500).json({ message: 'Erro ao criar usuário, tente novamente.', error });
     }
   }
 
@@ -64,7 +57,7 @@ class UserController {
     }
 
     try {
-      const user = await User.findOne({ email: email });
+      const user = await User.findOne({ email });
       if (!user) {
         return res.status(422).json({ message: 'Usuário não cadastrado.' });
       }
@@ -76,30 +69,27 @@ class UserController {
 
       await createUserToken(req, res, user);
     } catch (error) {
-      res.status(500).json({
-        message: 'Erro ao realizar login, tente novamente.',
-        error
-      });
+      res.status(500).json({ message: 'Erro ao realizar login, tente novamente.', error });
     }
   }
 
   static async checkUserByToken(req, res) {
-    let currentUser;
+    try {
+      const token = getTokenByRequest(req);
+      if (!token) return res.status(401).json({ message: 'Acesso negado.' });
 
-    if(req.headers.authorization) {
-      try {
-        const token = getTokenByRequest(req);
-        const decodedToken = jwt.verify(token, 'oursecret');
-        currentUser  = await User.findById(decodedToken.id);
-        currentUser.password = undefined;
-      } catch (error) {
-        console.log('Token inválido ou erro ao verificar usuário:', error);
-        return res.status(401).send({ message: 'Token inválido ou erro ao verificar usuário.' });
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+      const currentUser = await User.findById(decodedToken.id).select('-password');
+
+      if (!currentUser) {
+        return res.status(404).json({ message: 'Usuário não encontrado.' });
       }
-    }
 
-    console.log('Sem retorno.');
-    return res.status(200).json(currentUser);
+      return res.status(200).json(currentUser);
+    } catch (error) {
+      console.error('Erro ao verificar usuário:', error);
+      return res.status(401).json({ message: 'Token inválido ou expirado.' });
+    }
   }
 
   static async getUserById(req, res) {
@@ -107,7 +97,6 @@ class UserController {
 
     try {
       const user = await User.findById(id).select('-password');
-      console.log(user);
 
       if (!user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
@@ -115,25 +104,21 @@ class UserController {
 
       res.status(200).json({ user });
     } catch (error) {
-      console.error('Erro ao buscar usuário:', error);
-      res.status(500).json({
-        message: 'Erro ao buscar usuário, tente novamente.',
-        error
-      });
+      res.status(500).json({ message: 'Erro ao buscar usuário, tente novamente.', error });
     }
   }
 
   static async editUser(req, res) {
-    const user = req.user;
     const { id } = req.params;
+    const user = req.user;
 
     if (user.id !== id) {
       return res.status(403).json({ message: 'Você não tem permissão para editar este usuário.' });
     }
 
     const { name, email, phone, password, confirmPassword } = req.body;
-
     const userToUpdate = await User.findById(id);
+
     if (!userToUpdate) {
       return res.status(404).json({ message: 'Usuário não encontrado.' });
     }
@@ -172,7 +157,6 @@ class UserController {
       res.status(500).json({ message: 'Erro ao atualizar usuário, tente novamente.', error });
     }
   }
-
 }
 
 export default UserController;
