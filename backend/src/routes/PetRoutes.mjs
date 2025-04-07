@@ -8,6 +8,6 @@ import checkUSerToken from '../middlewares/checkUserToken.mjs';
 
 const router = express.Router();
 
-router.post('/create', checkUSerToken, PetController.create);
+router.post('/create', checkUSerToken, imageUpload.array('images'), PetController.create);
 
 export default router;
