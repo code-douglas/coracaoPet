@@ -2,8 +2,12 @@ import express from 'express';
 import PetController from '../controllers/PetController.mjs';
 import imageUpload from '../helpers/imagemUpload.mjs';
 
+// Middlewares
+
+import checkUSerToken from '../middlewares/checkUserToken.mjs';
+
 const router = express.Router();
 
-router.post('/create', PetController.create);
+router.post('/create', checkUSerToken, PetController.create);
 
 export default router;
