@@ -53,6 +53,27 @@ class PetController {
     //Images upload
 
   }
+
+  static async getAllPets(req, res) {
+    try {
+      const allPets = await Pet.find().sort('-createdAt');
+
+      if(allPets.length == 0) {
+        res.status(400).json({
+          message: 'Sem pets cadastrados no momento'
+        });
+        return;
+      }
+
+      return res.status(200).json({
+        pets: allPets
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: 'Não foi possivel resgatar dados no banco de dados, tente novamente.', error
+      });
+    }
+  }
 }
 
 export default PetController;
