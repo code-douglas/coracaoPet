@@ -1,3 +1,4 @@
+import { isValidObjectId } from 'mongoose';
 import Pet from '../models/Pet.mjs';
 import ValidationContract from '../helpers/validateUser.mjs';
 import getTokenByRequest from '../helpers/getTokenByRequest.mjs';
@@ -125,6 +126,37 @@ class PetController {
       });
     }
 
+  }
+
+  static async getPetById(req, res) {
+    const id = req.params.id;
+
+    if(!isValidObjectId(id)) {
+      res.status(422).json({
+        message: 'ID invalido.'
+      });
+      return;
+    }
+
+    try {
+      const pet = await Pet.findOne({ _id: id });
+
+      if(!pet) {
+        res.status(422).json({
+          message: 'Pet não encontrado.'
+        });
+        return;
+      }
+
+      res.status(200).json({
+        pet: pet
+      });
+    } catch(error) {
+      res.status(422).json({
+        message: 'Algo deu errado, tente novamente mais tarde.',
+        error
+      });
+    }
   }
 }
 
