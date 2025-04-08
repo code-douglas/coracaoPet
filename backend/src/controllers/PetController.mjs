@@ -74,6 +74,58 @@ class PetController {
       });
     }
   }
+
+  static async getAllUserPet(req, res) {
+    const token = getTokenByRequest(req);
+    const user =  await getUserByJwtToken(token);
+
+    try {
+      const pets = await Pet.find({ 'user._id': user._id }).sort('-createdAt');
+
+      if(pets.length == 0) {
+        res.status(400).json({
+          message: 'Você não possui pets cadastrados.',
+        });
+
+        return;
+      }
+
+      res.status(200).json({
+        pets,
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: 'Não foi possivel resgatar dados no banco de dados, tente novamente.', error
+      });
+    }
+  }
+
+  static async getAllUserAdoptions(req, res) {
+
+    const token = getTokenByRequest(req);
+    const user =  await getUserByJwtToken(token);
+
+    try {
+      const pets = await Pet.find({ 'adopter._id': user._id }).sort('-createdAt');
+
+      if(pets.length == 0) {
+        res.status(400).json({
+          message: 'Você não possui pets adotados.',
+        });
+
+        return;
+      }
+
+      res.status(200).json({
+        pets,
+      });
+    } catch (error) {
+      res.status(400).json({
+        message: 'Não foi possivel resgatar dados no banco de dados, tente novamente.', error
+      });
+    }
+
+  }
 }
 
 export default PetController;
