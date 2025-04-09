@@ -158,6 +158,37 @@ class PetController {
       });
     }
   }
+
+  static async removePetById(req, res) {
+    const token = getTokenByRequest(req);
+    const user =  await getUserByJwtToken(token);
+    const id = req.params.id;
+    const pet = await Pet.findOne({ _id: id });
+
+    if(!isValidObjectId(id)) {
+      res.status(422).json({
+        message: 'ID invalido.'
+      });
+      return;
+    }
+
+    if(!pet) {
+      res.status(422).json({
+        message: 'Pet não encontrado.'
+      });
+      return;
+    }
+
+    if(pet.user._id.toString() !== user._id.toString()) {
+      res.status(422).json({ message: 'Houve um problema ao processar a sua requisição, tente novamente mais tarde.!' });
+    }
+
+    await Pet.findByIdAndDelete(id);
+
+    res.status(200).json({
+      message: 'Pet removido com sucesso.'
+    });
+  }
 }
 
 export default PetController;
