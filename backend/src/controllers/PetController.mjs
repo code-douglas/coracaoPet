@@ -180,14 +180,24 @@ class PetController {
     }
 
     if(pet.user._id.toString() !== user._id.toString()) {
-      res.status(422).json({ message: 'Houve um problema ao processar a sua requisição, tente novamente mais tarde.!' });
+      res.status(422).json({
+        message: 'Houve um problema ao processar a sua requisição, tente novamente mais tarde.!'
+      });
+      return;
     }
 
-    await Pet.findByIdAndDelete(id);
+    try {
+      await Pet.findByIdAndDelete(id);
 
-    res.status(200).json({
-      message: 'Pet removido com sucesso.'
-    });
+      res.status(200).json({
+        message: 'Pet removido com sucesso.'
+      });
+    } catch (error) {
+      res.status(422).json({
+        message: 'Ocorreu um erro, tente mais tarde.',
+        error
+      });
+    }
   }
 }
 
