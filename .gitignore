@@ -1,4 +1,4 @@
 backend/node_modules/
 backend/.env
-backend/src/public/images/pets/*
-backend/src/public/images/users/*
+backend/public/images/pets/*
+backend/public/images/users/*
