@@ -12,6 +12,7 @@ export default [
       'indent': ['error', 2],
       'space-before-blocks': ['error', 'always'],
       'eol-last': ['error', 'always'],
+      'no-unused-vars': 'off',
       'no-trailing-spaces': 'error',
       'template-curly-spacing': ['error', 'never'],
       'object-curly-spacing': ['error', 'always'],
