@@ -221,6 +221,77 @@ class PetController {
       });
     }
   }
+
+  static async schedule(req, res) {
+    const token = getTokenByRequest(req);
+    const user = await getUserByJwtToken(token);
+    const id = req.params.id;
+
+    const pet = await Pet.findOne({ _id: id });
+
+    if (!pet) {
+      return res.status(404).json({ message: 'Pet não encontrado.' });
+    }
+
+    if (pet.user._id.equals(user._id)) {
+      return res.status(403).json({
+        message: 'Você não pode agendar uma visita para o seu próprio PET.'
+      });
+    }
+
+    if(pet.adopter) {
+      if(pet.adopter._id.equals(user._id)) {
+        return res.status(403).json({
+          message: 'Você já agendou uma visita para este PET.'
+        });
+      }
+    }
+
+    pet.adopter = {
+      _id: user._id,
+      name: user.name,
+      image: user.image
+    };
+
+    try {
+      await Pet.findByIdAndUpdate(id, pet);
+      res.status(200).json({
+        message: `A visita foi agendada com sucesso, entre em contato com ${pet.user.name} pelo telefone ${pet.user.phone}`
+      });
+    } catch (error) {
+      res.status(422).json({
+        message: 'Erro ao processar a sua solicitação.',
+        error
+      });
+    }
+  }
+
+  static async concludeAdoption(req, res) {
+    const token = getTokenByRequest(req);
+    const user = await getUserByJwtToken(token);
+    const id = req.params.id;
+    const pet = await Pet.findOne({ _id: id });
+
+    if (!pet) {
+      return res.status(404).json({ message: 'Pet não encontrado.' });
+    }
+
+    if (pet.user._id.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        message: 'Você não tem permissão para atualizar este pet.'
+      });
+    }
+
+    pet.available = false;
+
+    await Pet.findByIdAndUpdate(id, pet);
+
+    res.status(200).json({
+      message: 'Parabéns! O ciclo de adoção foi finalizado com sucesso.'
+    });
+
+    return;
+  }
 }
 
 export default PetController;
