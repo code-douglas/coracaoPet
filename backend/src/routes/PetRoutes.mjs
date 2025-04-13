@@ -12,5 +12,7 @@ router.get('/myadoptions', checkUserToken, PetController.getAllUserAdoptions);
 router.post('/create', checkUserToken, imageUpload.array('images'), PetController.create);
 router.delete('/:id', checkUserToken, PetController.removePetById);
 router.patch('/:id', checkUserToken, imageUpload.array('images'), PetController.updatePet);
+router.patch('/schedule/:id', checkUserToken, PetController.schedule);
+router.patch('/conclude/:id', checkUserToken, PetController.concludeAdoption);
 
 export default router;
